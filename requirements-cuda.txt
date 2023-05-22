@@ -1,0 +1,13 @@
+-r requirements-common.txt
+--extra-index-url https://download.pytorch.org/whl/cu118
+--extra-index-url https://pypi.ngc.nvidia.com
+nvidia-pyindex==1.0.9
+nvidia-cuda-runtime-cu12==12.1.105
+torch==2.0.0+cu118
+geotorch==0.3.0
+robustbench==1.1
+timm==0.6.13
+torchattacks @ https://github.com/Harry24k/adversarial-attacks-pytorch/archive/refs/tags/v3.4.1.zip
+torchaudio==2.0.1
+torchdiffeq==0.2.3
+torchvision==0.15.1
