@@ -1,5 +1,5 @@
 import torch
-from common_functions import train_model, test_model, test_classes, save_model, load_model, load_model_stats, save_model_stats, create_dataloader, plot_training_results
+from common_functions import train_model, test_model, save_model, load_model, load_model_stats, save_model_stats, create_dataloader, plot_training_results
 
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
