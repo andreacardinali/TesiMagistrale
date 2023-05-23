@@ -426,22 +426,23 @@ def plot_training_results(train_loss, val_loss, accuracy, elapsedtime, epoch, mo
         title = dict(
             text = f"{model_name} - training curves",
             font = dict(size=50),
-            automargin = True,
             yref = "paper"
         ),
-        xaxis=dict(
+        xaxis = dict(
             domain = [0, 1],
             tickmode = "linear",
             tick0 = 1,
             dtick = 1,
-            title_text = "epoch"
+            title_text = "epoch",
+            automargin = True
         ),
         yaxis = dict(
             title = "Accuracy",
             titlefont = dict(color="#0000ff"),
             tickfont = dict(color="#0000ff"),
             tickformat = ".2f",
-            range = [0, 100]
+            range = [0, 100],
+            automargin = True
         ),
      
         # pass the y-axis 2 title, titlefont, color and
