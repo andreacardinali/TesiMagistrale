@@ -67,7 +67,7 @@ class App(Tk):
                 self.adversarialImage_prediction.set(str(prediction_text))
 
             self.set_classification()
-            if self.is_not_blank(self.source_classification.get()):
+            if C.is_not_blank(self.source_classification.get()):
                 if self.source_classification.get() == prediction_label:
                     if source:
                         self.sourceImage_predictionlabel.config(fg="green")
@@ -87,9 +87,9 @@ class App(Tk):
             i = 0
             goodmatches = 0
             self.set_classification()
-            if self.is_not_blank(self.class_from_dir) and self.class_from_dir == self.source_classification.get():
+            if C.is_not_blank(self.class_from_dir) and self.class_from_dir == self.source_classification.get():
                 print(f"Found {total} images to scan. Correct class is {self.class_from_dir}")
-            elif self.is_not_blank(self.source_classification.get()):
+            elif C.is_not_blank(self.source_classification.get()):
                 print(f"Found {total} images to scan. Overriden class is {self.source_classification.get()}")
             else:
                 raise ValueError("Unable to determine class. Please select manually.")
@@ -107,7 +107,7 @@ class App(Tk):
   
                 label = C.get_cifar10_label_from_id(predict)
                 
-                if self.is_not_blank(self.source_classification.get()) and self.source_classification.get() == label:
+                if C.is_not_blank(self.source_classification.get()) and self.source_classification.get() == label:
                     goodmatches += 1
             print("", end="\r\n")
             result = goodmatches / total
@@ -150,7 +150,7 @@ class App(Tk):
   
                 label = C.get_cifar10_label_from_id(predict)
 
-                if self.is_not_blank(self.source_classification.get()) and self.source_classification.get() == label:
+                if C.is_not_blank(self.source_classification.get()) and self.source_classification.get() == label:
                     goodmatches += 1
             
             print("", end="\r\n")
@@ -207,7 +207,7 @@ class App(Tk):
             if param.default is not param.empty and i < self.maxargs:
                 if self.attack_args_names[i] is not None:
                     argvalue = str(self.attack_args_values[i].get())
-                    if argvalue == "None" or argvalue == "":
+                    if C.is_not_blank(argvalue) is False:
                         argvalue = None
                     elif isinstance(param.default, int):
                         argvalue = int(self.attack_args_values[i].get())
@@ -251,7 +251,7 @@ class App(Tk):
         attack = self.build_attack_function()
         
         # Define source label
-        if self.is_not_blank(self.source_classification.get()):
+        if C.is_not_blank(self.source_classification.get()):
             label = torch.tensor([C.get_cifar10_id_from_label(self.source_classification.get())])
         else:
             messagebox.showerror("Attack image", "Attack requires a source class. Please select manually")
@@ -303,7 +303,7 @@ class App(Tk):
 
     def save_log(self):    
         filepath = filedialog.asksaveasfilename(defaultextension=".txt", initialfile="log.txt", filetypes=[("Text files", "*.txt")])
-        if self.is_not_blank(filepath):
+        if C.is_not_blank(filepath):
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(self.log_text.get("1.0", "end"))
 
@@ -322,7 +322,7 @@ class App(Tk):
 
         filepath = filedialog.asksaveasfilename(defaultextension=".png", initialfile=initialfile, filetypes=[("PNG", "*.png"), ("JPG", "*.jpg"), ("BMP", "*.bmp")])
 
-        if self.is_not_blank(filepath):
+        if C.is_not_blank(filepath):
             import matplotlib.pyplot as plt
             save_extensions = (".png", ".jpg", ".bmp")
             default_ext = ".png"
@@ -371,7 +371,7 @@ class App(Tk):
     def open_dir(self):
         patterns = ("*.jpg", "*.jpeg", "*.png", "*.bmp")
         directory = filedialog.askdirectory(mustexist=True)
-        if directory != "" and Path(directory).is_dir():
+        if C.is_not_blank(directory) and Path(directory).is_dir():
             files = [os.path.normpath(f.path) for f in os.scandir(directory) if any(fnmatch(f, p) for p in patterns)]
             if len(files) > 0:
                 self.dir = os.path.normpath(directory)
@@ -385,10 +385,17 @@ class App(Tk):
 
     def open_model(self):
         model_filepath = os.path.normpath(filedialog.askopenfilename(filetypes=[("Model files", "*.pth")]))
-        if model_filepath != "" and Path(model_filepath).is_file():
+        if C.is_not_blank(model_filepath) and Path(model_filepath).is_file():
             self.model = C.load_model(model_filepath, self.device)
             self.model_filepath.set(str(model_filepath))
             self.model_name = Path(model_filepath).stem
+            
+            #Check for training stats
+            stats_filepath = os.path.splitext(str(model_filepath))[0] + '.pkl'
+            if C.is_not_blank(stats_filepath) and Path(stats_filepath).is_file():
+                self.stats_filepath.set(stats_filepath)
+                print("Found training statistics: " + stats_filepath)
+
             self.refresh_classify()
             self.refresh_attack()
 
@@ -419,9 +426,10 @@ class App(Tk):
         # Refresh GUI
         self.update_idletasks()
         C.test_model(model=self.model, dataloader=self.dataloader, device=self.device, print_progress=False, attack=attack)
-
-    def is_not_blank(self, s):
-        return bool(s and not s.isspace())
+    
+    def show_training_curves(self):
+        stats_filepath = C.validate_filepath(str(self.stats_filepath.get()))
+        C.plot_training_results(*C.load_model_stats(stats_filepath))
 
     def unlockbuttons(self):
         #Disables all buttons and then enables only the needed ones
@@ -434,6 +442,7 @@ class App(Tk):
         self.bNext.config(state="disabled")
         self.bZoomDown.config(state="disabled")
         self.bZoomUp.config(state="disabled")
+        self.bShowTrainingCurves.config(state="disabled")
         self.bClassify.config(state="disabled")
         self.bClassifyAll.config(state="disabled")
         self.bClassifyDataset.config(state="disabled")
@@ -493,6 +502,9 @@ class App(Tk):
                         self.bCheckTargetedAttack.grid()
                         self.bCheckTargetedAttack.config(state="normal")
         
+        if self.model is not None and C.is_not_blank(self.stats_filepath.get()) and Path(self.stats_filepath.get()).is_file():
+            self.bShowTrainingCurves.config(state="normal")
+
         if self.override_classification.get() is False:
             self.override_class_menu.config(state="disabled")
             self.override_class_menu.grid_remove()
@@ -500,7 +512,7 @@ class App(Tk):
         if self.override_classification.get() is True:
             self.override_class_menu.config(state="normal")
             self.override_class_menu.grid()
-            if not self.is_not_blank(self.source_classification_override.get()):
+            if not C.is_not_blank(self.source_classification_override.get()):
                 self.source_classification_override.set(self.class_list[0])
         
         if self.targeted_attack.get() is False:
@@ -510,7 +522,7 @@ class App(Tk):
         if self.targeted_attack.get() is True:
             self.targeted_class_menu.config(state="normal")
             self.targeted_class_menu.grid()
-            if not self.is_not_blank(self.target_classification.get()):
+            if not C.is_not_blank(self.target_classification.get()):
                 self.target_classification.set(self.class_list[0])
 
         #hiding and disabling unnormalized GUI elements is no normalization is used
@@ -540,9 +552,9 @@ class App(Tk):
     def set_classification(self):
         self.source_classification.set("")
         if self.override_classification.get() is False:
-            if self.is_not_blank(self.source_classification_fromsource.get()):
+            if C.is_not_blank(self.source_classification_fromsource.get()):
                 self.source_classification.set(self.source_classification_fromsource.get())
-        elif self.is_not_blank(self.source_classification_override.get()):
+        elif C.is_not_blank(self.source_classification_override.get()):
             self.source_classification.set(self.source_classification_override.get())
 
     def load_imagefile(self, filepath, device="cpu"):
@@ -779,12 +791,12 @@ class App(Tk):
             self.bSaveAdversarialImage.grid_remove()
 
     def refresh_attack(self):
-        if self.attack_on_the_fly.get() is True and (self.is_not_blank(self.target_classification.get()) or self.targeted_attack.get() is False):
+        if self.attack_on_the_fly.get() is True and (C.is_not_blank(self.target_classification.get()) or self.targeted_attack.get() is False):
             self.attack_image()
 
     def refresh_image(self):
         if self.img_index >= 0:
-            if self.filemode.get() == False and self.is_not_blank(self.dataset_type):
+            if self.filemode.get() == False and C.is_not_blank(self.dataset_type):
                 # save current img_index in a variable
                 current_img_index = self.img_index
                 self.open_dataset(dataset_type=self.dataset_type)
@@ -795,7 +807,7 @@ class App(Tk):
                 self.refresh_classify()
 
     def refresh_classify(self):
-        if self.filemode.get() is True and self.is_not_blank(self.class_from_dir):
+        if self.filemode.get() is True and C.is_not_blank(self.class_from_dir):
             self.source_classification_fromsource.set(self.class_from_dir)
             self.source_classificationLabel_text.set("Class retrieved from filesystem: " + self.source_classification_fromsource.get())
         elif self.filemode.get() is False and self.dataset is not None:
@@ -894,6 +906,7 @@ class App(Tk):
         self.model = None
         self.model_filepath = StringVar()
         self.model_filepath.set("No model loaded")
+        self.stats_filepath = StringVar()
         self.files = []
         self.classify_on_the_fly = BooleanVar()
         self.attack_on_the_fly = BooleanVar()
@@ -1040,7 +1053,7 @@ class App(Tk):
         self.bZoomUp.grid(row=1, column=2, padx=5, pady=5, sticky="e")
 
         # model_menu
-        self.model_filepathlabel=Label(self.model_menu, textvariable=str(self.model_filepath))
+        self.model_filepathlabel = Label(self.model_menu, textvariable=str(self.model_filepath))
         self.model_filepathlabel.grid(row=1, column=0, columnspan=2, padx=5, pady=10)
 
         self.bLoadModel = Button(self.model_menu, text="Load model", command=self.open_model, font=Button_style)
@@ -1048,14 +1061,17 @@ class App(Tk):
         self.bUseNormalization = Checkbutton(self.model_menu, text="Source/Model is\rusing Normalization", variable=self.use_normalization, font=Button_style)
         self.bUseNormalization.grid(row=2, column=1, padx=5, pady=5, sticky="w"+"e"+"n"+"s")
 
+        self.bShowTrainingCurves = Button(self.model_menu, text="Show training curves", command=self.show_training_curves, state="disabled", font=Button_style)
+        self.bShowTrainingCurves.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="w"+"e"+"n"+"s")
+
         self.bClassifyDataset = Button(self.model_menu, text="Classify dataset", command=self.classify_dataset, state="disabled", font=Button_style)
-        self.bClassifyDataset.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="w"+"e"+"n"+"s")
+        self.bClassifyDataset.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky="w"+"e"+"n"+"s")
         self.bClassifyAll = Button(self.model_menu, text="Classify all images", command=self.recognize_image_seek, state="disabled", font=Button_style)
-        self.bClassifyAll.grid(row=4, column=0, columnspan=2, padx=5, pady=5, sticky="w"+"e"+"n"+"s")
+        self.bClassifyAll.grid(row=5, column=0, columnspan=2, padx=5, pady=5, sticky="w"+"e"+"n"+"s")
         self.bClassify = Button(self.model_menu, text="Classify image", command=self.classify_image, state="disabled", font=Button_style)
-        self.bClassify.grid(row=5, column=0, columnspan=2, padx=5, pady=5, sticky="w"+"e"+"n"+"s")
+        self.bClassify.grid(row=6, column=0, columnspan=2, padx=5, pady=5, sticky="w"+"e"+"n"+"s")
         self.bCheckClassify = Checkbutton(self.model_menu, text="Classify on the fly", variable=self.classify_on_the_fly, onvalue=True, offvalue=False, state="disabled", font=Button_style)
-        self.bCheckClassify.grid(row=6, column=0, columnspan=2, padx=5, pady=5, sticky="w"+"e"+"n"+"s")
+        self.bCheckClassify.grid(row=7, column=0, columnspan=2, padx=5, pady=5, sticky="w"+"e"+"n"+"s")
 
 
         # attack_menu

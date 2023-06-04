@@ -1,6 +1,10 @@
+from ctypes.wintypes import BOOL
 import os
 from pathlib import Path
 import pickle
+import string
+from wsgiref import validate
+from xml.etree.ElementInclude import include
 import torch
 import torchvision
 import numpy as np
@@ -17,30 +21,57 @@ def disk_icon():
     base64_string = b"iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAUVBMVEVHcEzs8PHM0tXc4OMlbp4rfbU0mNs0mNsrf7eavteu0ulxteIsiMTm6uzh5eedyudgq90ylNbA1uTV4+owkM/p7vBur9qqyt7B2+vX5u6tz+V8u4LNAAAACnRSTlMA////f5///Z/9cXypJgAAAF9JREFUGNONz8kOgCAMRVGLWqBVBmf9/w81FtCVCXd5Fi95TVOR0QwA8z5xl0DjA9eyMSZBAUJmxAxhBTjpCC/EQYovfCXwkPMZyCnJUYGxlcY/0FQ2SAv0VuWsqbl6A07jA+gGmk9/AAAAAElFTkSuQmCC"
     return BytesIO(base64.b64decode(base64_string))
 
+def is_not_blank(s : str):
+    return bool(s and not s.isspace())
+
 def validate_filename(s):
     badchars = re.compile(r"[^A-Za-z0-9_. ]+|^\.|\.$|^ | $|^$")
     badnames = re.compile(r"(aux|com[1-9]|con|lpt[1-9]|prn)(\.|$)")
-    name= badchars.sub("_", s)
+    name = badchars.sub("_", s)
     if badnames.match(name):
         name = "_" + name
     return name
 
+def validate_filepath(filepath, mustexist : bool=True):
+    if is_not_blank(str(filepath)):
+        pathchars = re.compile(r'[\\/]')
+        if pathchars.match(str(filepath)) and Path(filepath).is_file():
+                return filepath
+        # Check if it's a filepath or a filename
+        elif pathchars.match(str(filepath)) is None:
+            # input looks to be a filename only. Adding working dir and validate the path
+            joined_path = Path(os.path.join(str(os.getcwd()), filepath))
+            if joined_path.is_file():
+                return joined_path
+            else:
+                if mustexist is True:
+                    raise ValueError(f"Supplied path does not exist: {filepath}")
+                else:
+                    return joined_path
+        else:
+             raise ValueError(f"Supplied path is not valid: {filepath}")
+    else:
+        raise ValueError(f"Blank path was supplied.")
+
 def save_model(model, model_name="model"):
     model_filename = validate_filename(model_name) + ".pth"
-    model_filepath = os.path.join(str(os.getcwd()), model_filename)
+    model_filepath = validate_filepath(model_filename, False)
+    #model_filepath = os.path.join(str(os.getcwd()), model_filename)
     model_scripted = torch.jit.script(model) # Export to TorchScript
     model_scripted.save(model_filepath) # Save
-    print("Saved model to " + model_filepath)
+    print("Saved model to " + str(model_filepath))
 
-def load_model(model_filename="model.pth", device="cpu"):
-    model_filepath = os.path.join(str(os.getcwd()), model_filename)
+def load_model(model_filepath, device="cpu"):
+    model_filepath = validate_filepath(model_filepath)
+    #model_filepath = os.path.join(str(os.getcwd()), model_filename)
     model = torch.jit.load(model_filepath, map_location=device)
-    print("Loaded model from " + model_filepath)
+    print("Loaded model from " + str(model_filepath))
     return model.eval()
 
 def save_model_stats(model_name="model", train_loss=None, val_loss=None, accuracy=None, elapsedtime=None, epoch=None):
     stats_filename = validate_filename(model_name) + ".pkl"
-    stats_filepath = os.path.join(str(os.getcwd()), stats_filename)
+    stats_filepath = validate_filepath(stats_filename, False)
+    #stats_filepath = os.path.join(str(os.getcwd()), stats_filename)
     with open(stats_filepath, "wb") as f:
         pickle.dump([train_loss, val_loss, accuracy, elapsedtime, epoch, model_name], f)
 
@@ -51,7 +82,8 @@ def load_model_stats(stats_filename="model.pkl"):
     elapsedtime = None
     epoch = None
     model_name = None
-    stats_filepath = os.path.join(str(os.getcwd()), stats_filename)
+    stats_filepath = validate_filepath(stats_filename)
+    #stats_filepath = os.path.join(str(os.getcwd()), stats_filename)
     if Path(stats_filepath).is_file():
         with open(stats_filepath, "rb") as f:
             train_loss, val_loss, accuracy, elapsedtime, epoch, model_name = pickle.load(f)
@@ -405,22 +437,6 @@ def plot_training_results(train_loss, val_loss, accuracy, elapsedtime, epoch, mo
             )
     )
 
-    #Best epoch zone
-    fig.add_vline(x=epoch, line_width=5, line_dash="dash", line_color="orange", annotation_text="Best epoch", annotation_textangle=90)
-
-    tol = min(val_loss) * 1.10
-    x0 = list(filter(lambda i: i < tol, val_loss))[0]
-    x1 = list(filter(lambda i: i < tol, val_loss))[-1]
-    fig.add_vrect(
-        x0 = x[val_loss.index(x0)],
-        x1 = x[val_loss.index(x1)], 
-        annotation_text = "Best validation loss range",
-        annotation_position = "bottom left",
-        fillcolor = "green",
-        opacity = 0.10,
-        line_width = 0
-    )
-
     # Create axis objects
     fig.update_layout(
         title = dict(
@@ -459,6 +475,59 @@ def plot_training_results(train_loss, val_loss, accuracy, elapsedtime, epoch, mo
         ),
         hovermode = "x unified"
     )
+
+    #Best epoch zone
+    fig.add_vline(x=epoch, line_width=5, line_dash="dash", line_color="orange", annotation_text="Best epoch", annotation_textangle=90)
+
+    tol = min(val_loss) * 1.10
+    x0 = list(filter(lambda i: i < tol, val_loss))[0]
+    x1 = list(filter(lambda i: i < tol, val_loss))[-1]
+    fig.add_vrect(
+        x0 = x[val_loss.index(x0)],
+        x1 = x[val_loss.index(x1)], 
+        annotation_text = "Epochs within validation loss range",
+        annotation_position = "bottom left",
+        fillcolor = "green",
+        opacity = 0.10,
+        line_width = 0
+    )
+
+    #fig.add_hrect(
+    #    y0 = min(val_loss),
+    #    y1 = tol,
+    #    annotation_text = "Best validation loss range",
+    #    annotation_position = "bottom left",
+    #    fillcolor = "green",
+    #    opacity = 0.10,
+    #    line_width = 0,
+    #    yref = "y2"
+    #)
+
+    fig.add_shape(
+        type = "rect",
+        yref = "y2",
+        xref = "paper",
+        y0 = min(val_loss),
+        y1 = tol,
+        x0 = 0,
+        x1 = 1,
+        fillcolor = "green",
+        opacity = 0.10,
+        line_width = 0
+    )
+    fig.add_annotation(
+        yref = "y2",
+        xref = "paper",
+        y = min(val_loss),
+        yshift = -10,
+        x = 1,
+        text = "Best validation loss range",
+        showarrow = False
+    )
+
+
+
+
 
     # Annotations
     fig.add_annotation(

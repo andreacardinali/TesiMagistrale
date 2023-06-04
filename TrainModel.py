@@ -1,5 +1,5 @@
 import torch
-from common_functions import train_model, test_model, save_model, load_model, load_model_stats, save_model_stats, create_dataloader, plot_training_results
+from common_functions import train_model, test_model, load_model, load_model_stats, create_dataloader, plot_training_results
 
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -21,23 +21,23 @@ if __name__ == "__main__":
 
     train_model(model1, num_epochs=50, device=device, model_name="CNN1", train_dataloader=train_loader, validation_dataloader=validate_loader, prevent_overfit=False, save_stats=True)
     #model1 = load_model("CNN1.pth", device)
-    plot_training_results(*load_model_stats("CNN1.pkl"))
+    #plot_training_results(*load_model_stats("CNN1.pkl"))
     test_model(model=model1, device=device, dataloader=test_loader, class_stats=True) 
 
-    #train_model(model2, num_epochs=50, device=device, model_name="CNN2", train_dataloader=train_loader, validation_dataloader=validate_loader, prevent_overfit=False, save_stats=True)
+    train_model(model2, num_epochs=50, device=device, model_name="CNN2", train_dataloader=train_loader, validation_dataloader=validate_loader, prevent_overfit=False, save_stats=True)
     #model2 = load_model("CNN2.pth", device)
     #plot_training_results(*load_model_stats("CNN2.pkl"))
-    #test_model(model=model2, device=device, dataloader=test_loader, class_stats=True)
+    test_model(model=model2, device=device, dataloader=test_loader, class_stats=True)
 
-    #train_model(model3, num_epochs=30, device=device, model_name="CNN3", train_dataloader=train_loader, validation_dataloader=validate_loader, prevent_overfit=False, save_stats=True)
+    train_model(model3, num_epochs=50, device=device, model_name="CNN3", train_dataloader=train_loader, validation_dataloader=validate_loader, prevent_overfit=False, save_stats=True)
     #model3 = load_model("CNN3.pth", device)
     #plot_training_results(*load_model_stats("CNN3.pkl"))
-    #test_model(model=model3, device=device, dataloader=test_loader, class_stats=True) 
+    test_model(model=model3, device=device, dataloader=test_loader, class_stats=True) 
 
-    #train_model(model4, num_epochs=30, device=device, model_name="CNN4", train_dataloader=train_loader, validation_dataloader=validate_loader, prevent_overfit=False, save_stats=True)
+    train_model(model4, num_epochs=50, device=device, model_name="CNN4", train_dataloader=train_loader, validation_dataloader=validate_loader, prevent_overfit=False, save_stats=True)
     #model4 = load_model("CNN4.pth", device)
     #plot_training_results(*load_model_stats("CNN4.pkl"))
-    #test_model(model=model4, device=device, dataloader=test_loader, class_stats=True) 
+    test_model(model=model4, device=device, dataloader=test_loader, class_stats=True) 
 
     #model_pret_1 = torch.hub.load("chenyaofo/pytorch-cifar-models", "cifar10_repvgg_a2", pretrained=True, trust_repo=True).eval()
     #model_pret_2 = torch.hub.load("chenyaofo/pytorch-cifar-models", "cifar10_shufflenetv2_x0_5", pretrained=True, trust_repo=True).eval()
