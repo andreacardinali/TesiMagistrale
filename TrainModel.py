@@ -38,12 +38,4 @@ if __name__ == "__main__":
     #model4 = load_model("CNN4.pth", device)
     #plot_training_results(*load_model_stats("CNN4.pkl"))
     test_model(model=model4, device=device, dataloader=test_loader, class_stats=True) 
-
-    #model_pret_1 = torch.hub.load("chenyaofo/pytorch-cifar-models", "cifar10_repvgg_a2", pretrained=True, trust_repo=True).eval()
-    #model_pret_2 = torch.hub.load("chenyaofo/pytorch-cifar-models", "cifar10_shufflenetv2_x0_5", pretrained=True, trust_repo=True).eval()
-    #print(model_pret_1)
-    #print(model_pret_2)
-
-    #test_model(model_pret_1, device)
-    #test_model(model_pret_2, device)
  
