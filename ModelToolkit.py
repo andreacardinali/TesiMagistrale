@@ -1,7 +1,7 @@
 from PIL import Image as PIL_Image
 from PIL import ImageTk as PIL_ImageTk
 import numpy as np
-import sys, threading
+import sys
 import os
 import time
 import torch
@@ -709,7 +709,6 @@ class App(Tk):
 
     def seek_to(self):
         old_img_index = self.img_index
-        
         try:
             self.img_index_human.set(self.index_check.get())
             self.img_index = int(self.img_index_human.get() - 1)

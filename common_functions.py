@@ -1,10 +1,6 @@
-from ctypes.wintypes import BOOL
 import os
 from pathlib import Path
 import pickle
-import string
-from wsgiref import validate
-from xml.etree.ElementInclude import include
 import torch
 import torchvision
 import numpy as np
@@ -36,7 +32,7 @@ def validate_filepath(filepath, mustexist : bool=True):
     if is_not_blank(str(filepath)):
         pathchars = re.compile(r'[\\/]')
         if pathchars.match(str(filepath)) and Path(filepath).is_file():
-                return filepath
+            return filepath
         # Check if it's a filepath or a filename
         elif pathchars.match(str(filepath)) is None:
             # input looks to be a filename only. Adding working dir and validate the path
@@ -49,9 +45,9 @@ def validate_filepath(filepath, mustexist : bool=True):
                 else:
                     return joined_path
         else:
-             raise ValueError(f"Supplied path is not valid: {filepath}")
+            raise ValueError(f"Supplied path is not valid: {filepath}")
     else:
-        raise ValueError(f"Blank path was supplied.")
+        raise ValueError("Blank path was supplied.")
 
 def save_model(model, model_name="model"):
     model_filename = validate_filename(model_name) + ".pth"
