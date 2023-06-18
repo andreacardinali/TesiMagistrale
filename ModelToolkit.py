@@ -390,7 +390,7 @@ class App(Tk):
             self.model_filepath.set(str(model_filepath))
             self.model_name = Path(model_filepath).stem
             
-            #Check for training stats
+            # Check for training stats
             stats_filepath = os.path.splitext(str(model_filepath))[0] + '.pkl'
             if C.is_not_blank(stats_filepath) and Path(stats_filepath).is_file():
                 self.stats_filepath.set(stats_filepath)
@@ -432,7 +432,7 @@ class App(Tk):
         C.plot_training_results(*C.load_model_stats(stats_filepath))
 
     def unlockbuttons(self):
-        #Disables all buttons and then enables only the needed ones
+        # Disables all buttons and then enables only the needed ones
         self.bOpenTrainDataset.config(state="disabled")
         self.bOpenTestDataset.config(state="disabled")
         self.bOpenFile.config(state="disabled")
@@ -525,7 +525,7 @@ class App(Tk):
             if not C.is_not_blank(self.target_classification.get()):
                 self.target_classification.set(self.class_list[0])
 
-        #hiding and disabling unnormalized GUI elements is no normalization is used
+        # hiding and disabling unnormalized GUI elements is no normalization is used
         if self.use_normalization.get() is False:
             self.sourceImage.grid(row=1, column=0, padx=5, pady=5)
             self.sourceImage_predictionlabel.grid(row=2, column=0, columnspan=1, padx=5, pady=5)

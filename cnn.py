@@ -3,7 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 
 class CNN1(nn.Module):
-    #  https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
+    # https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
     def __init__(self, num_classes):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
@@ -23,8 +23,8 @@ class CNN1(nn.Module):
         return x
 
 class CNN2(nn.Module):
-    #  https://blog.paperspace.com/writing-cnns-from-scratch-in-pytorch/
-	#  Determine what layers and their order in CNN object
+    # https://blog.paperspace.com/writing-cnns-from-scratch-in-pytorch/
+	# Determine what layers and their order in CNN object
     def __init__(self, num_classes):
         super(CNN2, self).__init__()
         self.conv_layer1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3)

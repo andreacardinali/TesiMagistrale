@@ -56,14 +56,12 @@ def validate_filepath(filepath, mustexist : bool=True):
 def save_model(model, model_name="model"):
     model_filename = validate_filename(model_name) + ".pth"
     model_filepath = validate_filepath(model_filename, False)
-    #model_filepath = os.path.join(str(os.getcwd()), model_filename)
     model_scripted = torch.jit.script(model) # Export to TorchScript
     model_scripted.save(model_filepath) # Save
     print("Saved model to " + str(model_filepath))
 
 def load_model(model_filepath, device="cpu"):
     model_filepath = validate_filepath(model_filepath)
-    #model_filepath = os.path.join(str(os.getcwd()), model_filename)
     model = torch.jit.load(model_filepath, map_location=device)
     print("Loaded model from " + str(model_filepath))
     return model.eval()
@@ -71,7 +69,6 @@ def load_model(model_filepath, device="cpu"):
 def save_model_stats(model_name="model", train_loss=None, val_loss=None, accuracy=None, elapsedtime=None, epoch=None):
     stats_filename = validate_filename(model_name) + ".pkl"
     stats_filepath = validate_filepath(stats_filename, False)
-    #stats_filepath = os.path.join(str(os.getcwd()), stats_filename)
     with open(stats_filepath, "wb") as f:
         pickle.dump([train_loss, val_loss, accuracy, elapsedtime, epoch, model_name], f)
 
@@ -83,7 +80,6 @@ def load_model_stats(stats_filename="model.pkl"):
     epoch = None
     model_name = None
     stats_filepath = validate_filepath(stats_filename)
-    #stats_filepath = os.path.join(str(os.getcwd()), stats_filename)
     if Path(stats_filepath).is_file():
         with open(stats_filepath, "rb") as f:
             train_loss, val_loss, accuracy, elapsedtime, epoch, model_name = pickle.load(f)
@@ -108,7 +104,7 @@ def train_model(model, num_epochs : int, train_dataloader, validation_dataloader
     optimizer = Adam(model.parameters(), lr=0.001, weight_decay=0.0001)
 
     print(f"{model_name}: training started...") 
-    for epoch in range(1, num_epochs+1): 
+    for epoch in range(1, num_epochs + 1): 
         running_train_loss = 0.0 
         running_accuracy = 0.0 
         running_val_loss = 0.0 
@@ -301,7 +297,7 @@ def create_dataloader(train: bool = True, train_split: bool = True, shuffle: boo
         validate_subset_size = len(dataset) - train_subset_size
         train_dataset, validate_dataset = torch.utils.data.random_split(dataset, [train_subset_size, validate_subset_size])
 
-        #Define the 2 dataloaders
+        # Define the 2 dataloaders
         train_loader = torch.utils.data.DataLoader(
             train_dataset,
             batch_size=batch_size,
@@ -347,16 +343,14 @@ def calculate_mean_std(tensor:torch.tensor):
     mean = torch.zeros([1, 3], dtype=torch.float32)
     std = torch.zeros([1, 3], dtype=torch.float32)
     if len(tensor.data.shape) == 3:
-        #tensor_image = tensor
         mean = torch.tensor(tensor.data.mean(axis=(1,2)), dtype=torch.float32)
         std = torch.tensor(tensor.data.std(axis=(1,2)), dtype=torch.float32)
     elif len(tensor.data.shape) == 4:
         if tensor.data.shape[0] > 0:
-            #dataset = tensor
             mean = torch.tensor(tensor.data.mean(axis=(0,1,2))/255, dtype=torch.float32)
             std = torch.tensor(tensor.data.std(axis=(0,1,2))/255, dtype=torch.float32)
         else:
-            #tensor is a dataset
+            # tensor is a dataset
             tr_tensor = torchvision.transforms.ToTensor()
             tensor.transform = tr_tensor
             dataloader = torch.utils.data.DataLoader(tensor, batch_size=1, num_workers=1, shuffle=False, collate_fn=None)
@@ -476,7 +470,7 @@ def plot_training_results(train_loss, val_loss, accuracy, elapsedtime, epoch, mo
         hovermode = "x unified"
     )
 
-    #Best epoch zone
+    # Best epoch zone
     fig.add_vline(x=epoch, line_width=5, line_dash="dash", line_color="orange", annotation_text="Best epoch", annotation_textangle=90)
 
     tol = min(val_loss) * 1.10
@@ -491,17 +485,6 @@ def plot_training_results(train_loss, val_loss, accuracy, elapsedtime, epoch, mo
         opacity = 0.10,
         line_width = 0
     )
-
-    #fig.add_hrect(
-    #    y0 = min(val_loss),
-    #    y1 = tol,
-    #    annotation_text = "Best validation loss range",
-    #    annotation_position = "bottom left",
-    #    fillcolor = "green",
-    #    opacity = 0.10,
-    #    line_width = 0,
-    #    yref = "y2"
-    #)
 
     fig.add_shape(
         type = "rect",
@@ -524,10 +507,6 @@ def plot_training_results(train_loss, val_loss, accuracy, elapsedtime, epoch, mo
         text = "Best validation loss range",
         showarrow = False
     )
-
-
-
-
 
     # Annotations
     fig.add_annotation(
