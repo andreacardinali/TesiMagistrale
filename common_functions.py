@@ -180,9 +180,12 @@ def train_model(model, num_epochs : int, train_dataloader, validation_dataloader
             best_val_loss = val_loss_value
 
         val_loss_trend = (val_loss_value - best_val_loss) / best_val_loss * 100
+
+        if val_loss_value < best_val_loss:
+            best_val_loss = val_loss_value
+
         if val_loss_trend < -overfit_tolerance or epoch == 1:
             print(f"Model is not yet overfitting. Validation loss trend: {val_loss_trend:+.2f} %", end = "")
-            best_val_loss = val_loss_value
         # The fit range is good....
         elif -overfit_tolerance <= val_loss_trend <= overfit_tolerance and epoch > 1:
             print(f"Model is in the best fitting range! Validation loss trend: {val_loss_trend:+.2f} % ", end = "")
