@@ -203,7 +203,6 @@ def train_model(model, num_epochs : int, train_dataloader, validation_dataloader
     # Save statistics to file
     if save_stats is True:
         save_model_stats(model_name, hystorical_train_loss, hystorical_val_loss, hystorical_accuracy, hystorical_elapsedtime, winning_epoch)
-    return hystorical_train_loss, hystorical_val_loss, hystorical_accuracy, hystorical_elapsedtime, winning_epoch
 
 # Function to test the model and which classes are easier to predict  
 def test_model(model, dataloader, device="cpu", print_progress : bool=True, class_stats : bool=True, attack=None): 
