@@ -220,6 +220,7 @@ def test_model(model, dataloader, device="cpu", print_progress : bool=True, clas
     total = 0 
     batch_size = dataloader.batch_size
     starttime = time.perf_counter()
+    running_comparison = 0
 
     # Class captions for labels
     labels = dataloader.dataset.class_to_idx
@@ -241,6 +242,7 @@ def test_model(model, dataloader, device="cpu", print_progress : bool=True, clas
             predicted_outputs = model(inputs)
         else:
             adv_inputs = attack(inputs, outputs)
+            running_comparison += (torch.eq(inputs,adv_inputs) == True).sum().item() / torch.numel(inputs) * dataloader.batch_size
             predicted_outputs = model(adv_inputs)
         # The label having the highest probability is the final prediction
         _, predicted = torch.max(predicted_outputs, 1)
@@ -251,7 +253,10 @@ def test_model(model, dataloader, device="cpu", print_progress : bool=True, clas
         label_correct_running = (predicted == outputs).squeeze()
         # Print progress statistics every 500 images
         if i % int(500 / batch_size) == int(500 / batch_size) -1 and print_progress is True:
-            print(f"[TESTING] Accuracy of the model based on the a set of {total} inputs is: {100 * running_accuracy / total:.2f} %", end="\r")
+            if attack is None:
+                print(f"[TESTING] Accuracy of the model based on the a set of {total} inputs is: {100 * running_accuracy / total:.2f} %", end="\r")
+            else:
+                print(f"[TESTING] Accuracy of the model based on the a set of {total} inputs is: {100 * running_accuracy / total:.2f} %, unchanged pixels: {100 * running_comparison / total:.2f} %", end="\r")
         
         # Calculates the accuracy all over the classes
         if class_stats is True:
@@ -262,7 +267,12 @@ def test_model(model, dataloader, device="cpu", print_progress : bool=True, clas
                     labels_correct[label] += 1
     
     elapsedtime = time.perf_counter() - starttime
-    print(f"[TESTING COMPLETE] Time: {elapsedtime:.2f} seconds. Accuracy of the model based on a set of", len(dataloader.dataset) ,"inputs is: %.2f %%" % (100 * running_accuracy / total))
+    if attack is None:
+        print(f"[TESTING COMPLETE] Time: {elapsedtime:.2f} seconds. Accuracy of the model based on a set of", len(dataloader.dataset) ,"inputs is: %.2f %%" % (100 * running_accuracy / total))
+    else:
+        print(f"[TESTING COMPLETE] Time: {elapsedtime:.2f} seconds. Accuracy of the model based on a set of", len(dataloader.dataset) ,"inputs is: %.2f %%" % (100 * running_accuracy / total), "- unchanged pixels: %.2f %%" % (100 * running_comparison / total))
+    
+    
 
     # Prints the class prediction statistics
     if class_stats is True:

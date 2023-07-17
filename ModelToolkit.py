@@ -65,6 +65,9 @@ class App(Tk):
                 self.sourceImage_prediction.set(str(prediction_text))
             else:
                 self.adversarialImage_prediction.set(str(prediction_text))
+                unchanged_pixels_perc = (torch.eq(self.t_source_image,self.t_adv_image) == True).sum().item() / torch.numel(self.t_source_image) * 100
+                self.deltaImage_unchangedpixels.set(str(f"Unchanged pixels: {(unchanged_pixels_perc):.2f}%"))
+
 
             self.set_classification()
             if C.is_not_blank(self.source_classification.get()):
@@ -786,6 +789,7 @@ class App(Tk):
         else:
             self.adversarialImage.config(image="", width=0, height=0)
             self.adversarialImage_prediction.set("")
+            self.deltaImage_unchangedpixels.set("")
             self.adversarialImageUnnormalized.config(image="", width=0, height=0)
             self.bSaveAdversarialImage.grid_remove()
 
@@ -826,6 +830,7 @@ class App(Tk):
         else:
             self.sourceImage_prediction.set("")
             self.adversarialImage_prediction.set("")
+            self.deltaImage_unchangedpixels.set("")
         self.refresh_gui()
 
     def refresh_gui(self):
@@ -862,6 +867,7 @@ class App(Tk):
         self.deltaImage.config(image="", width=0, height=0)
         self.adversarialImage.config(image="", width=0, height=0)
         self.adversarialImage_prediction.set("")
+        self.deltaImage_unchangedpixels.set("")
         self.adversarialImageUnnormalized.config(image="", width=0, height=0)
         self.bSaveAll.grid_remove()
         self.bSaveSourceImage.grid_remove()
@@ -913,6 +919,7 @@ class App(Tk):
         self.targeted_attack_enable = BooleanVar()
         self.sourceImage_prediction = StringVar()
         self.adversarialImage_prediction = StringVar()
+        self.deltaImage_unchangedpixels = StringVar()
         self.zoomlevel = IntVar()
         self.zoomlevel.set(4)
         # Dynamic text fields
@@ -1165,6 +1172,8 @@ class App(Tk):
         self.deltaImage.grid(row=1, column=0, padx=5, pady=5)
         self.bSaveDeltaImage = Button(delta_frame, compound="left", text="Delta image", image=Tk_disk_icon, command=lambda *e: self.save_file(imagetype="delta"), font=Button_style)
         self.bSaveDeltaImage.grid(row=0, column=0, padx=5, pady=5, sticky="w"+"e"+"n"+"s")
+        self.deltaImage_unchangedpixelslabel=Label(delta_frame, textvariable=str(self.deltaImage_unchangedpixels), font=Classification_style)
+        self.deltaImage_unchangedpixelslabel.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
         self.bSaveDeltaImage.image = Tk_disk_icon
 
         # adversarial_frame
